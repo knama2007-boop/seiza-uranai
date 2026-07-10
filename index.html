@@ -423,13 +423,6 @@
     line-height: 1.2;
   }
 
-  .power-chara-name {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-sub);
-    white-space: nowrap;
-  }
-
   .power-bubble {
     position: relative;
     flex: 1;
@@ -582,7 +575,6 @@
           <div class="power-chara-row">
             <span class="power-chara">
               <span class="power-chara-emoji" id="power-chara-emoji" aria-hidden="true"></span>
-              <span class="power-chara-name" id="power-chara-name"></span>
             </span>
             <p class="power-bubble" id="power-text"></p>
           </div>
@@ -949,7 +941,6 @@
         badge.textContent = powerDef.name;
         badge.style.background = powerDef.color;
         document.getElementById('power-chara-emoji').textContent = charaDef.emoji;
-        document.getElementById('power-chara-name').textContent = charaDef.name;
         document.getElementById('power-text').textContent = f.powerText || '';
 
         pickerSection.classList.add('hidden');
