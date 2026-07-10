@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>『遊！』今日の星座占い</title>
+<style>
+  :root {
+    /* 和の朝テイスト配色トークン */
+    --color-bg: #fdf8f2;
+    --color-bg-gradient-top: #fff7ec;
+    --color-bg-gradient-bottom: #fdf0e6;
+    --color-surface: #ffffff;
+    --color-surface-soft: #fff9f2;
+    --color-primary: #d97a4a;      /* 柔らかい柿色 */
+    --color-primary-dark: #b85c34;
+    --color-accent: #c8493f;       /* 朱色アクセント */
+    --color-accent-soft: #f7e3d9;
+    --color-gold: #c9a227;         /* ラッキー要素用の金 */
+    --color-text-main: #3a2e28;
+    --color-text-sub: #7a6a5f;
+    --color-border: #ecdcc9;
+    --color-star-on: #e0a331;
+    --color-star-off: #e8e0d6;
+    --color-focus: #1e6b7a;
+
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --shadow-card: 0 6px 20px rgba(180, 120, 70, 0.12);
+    --shadow-soft: 0 2px 8px rgba(180, 120, 70, 0.08);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+      "Yu Gothic", "游ゴシック", Meiryo, sans-serif;
+    background: linear-gradient(180deg, var(--color-bg-gradient-top) 0%, var(--color-bg-gradient-bottom) 100%);
+    color: var(--color-text-main);
+    min-height: 100vh;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 48px;
+  }
+
+  header.app-header {
+    padding: 28px 16px 20px;
+    text-align: center;
+  }
+
+  .header-kicker {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--color-primary-dark);
+    background: var(--color-accent-soft);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  h1.app-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--color-text-main);
+    letter-spacing: 0.02em;
+  }
+
+  h1.app-title .brand {
+    color: var(--color-accent);
+  }
+
+  .app-date {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin: 0;
+  }
+
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-sub);
+    margin: 0 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 14px;
+    background: var(--color-primary);
+    border-radius: 2px;
+  }
+
+  .zodiac-picker {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 18px 14px;
+    margin-bottom: 20px;
+  }
+
+  .zodiac-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .zodiac-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 4px;
+    border: 1.5px solid var(--color-border);
+    background: var(--color-surface-soft);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--color-text-main);
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .zodiac-btn:hover {
+    border-color: var(--color-primary);
+    background: #fff;
+  }
+
+  .zodiac-btn:active {
+    transform: scale(0.96);
+  }
+
+  .zodiac-btn .zodiac-emoji {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .zodiac-btn .zodiac-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-sub);
+  }
+
+  .zodiac-btn[aria-pressed="true"] {
+    background: linear-gradient(160deg, #f9e2c8 0%, #f4cfa1 100%);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .zodiac-btn[aria-pressed="true"] .zodiac-name {
+    color: var(--color-primary-dark);
+  }
+
+  .selected-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .selected-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .selected-bar-emoji {
+    font-size: 28px;
+  }
+
+  .selected-bar-text {
+    font-size: 14px;
+    color: var(--color-text-sub);
+  }
+
+  .selected-bar-text strong {
+    display: block;
+    font-size: 16px;
+    color: var(--color-text-main);
+  }
+
+  .btn-change {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    background: var(--color-accent-soft);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-change:hover {
+    background: #f0d0b4;
+  }
+
+  .result-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .result-hero {
+    background: linear-gradient(135deg, #f7ddb8 0%, #f3c896 45%, #eab174 100%);
+    padding: 26px 20px 22px;
+    text-align: center;
+    position: relative;
+  }
+
+  .result-hero-emoji {
+    font-size: 44px;
+    line-height: 1;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .result-hero-name {
+    font-size: 19px;
+    font-weight: 700;
+    color: #5a3a1e;
+    margin: 0 0 4px;
+  }
+
+  .result-hero-rank {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    background: rgba(255,255,255,0.55);
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-top: 6px;
+  }
+
+  .result-hero-rank .rank-label {
+    font-size: 12px;
+    color: #6b4a2a;
+    font-weight: 600;
+  }
+
+  .result-hero-rank .rank-number {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-accent);
+  }
+
+  .result-hero-rank .rank-unit {
+    font-size: 13px;
+    color: #6b4a2a;
+    font-weight: 600;
+  }
+
+  .result-body {
+    padding: 22px 20px 24px;
+  }
+
+  .fortune-text {
+    font-size: 15px;
+    color: var(--color-text-main);
+    margin: 0 0 20px;
+    line-height: 1.8;
+  }
+
+  .lucky-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .lucky-item {
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+
+  .lucky-item-label {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .lucky-item-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .color-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 84px;
+  }
+
+  .stat-stars {
+    font-size: 17px;
+    letter-spacing: 2px;
+  }
+
+  .stat-stars .on {
+    color: var(--color-star-on);
+  }
+
+  .stat-stars .off {
+    color: var(--color-star-off);
+  }
+
+  /* リベシティ「5つの力」ワンポイント */
+  .power-card {
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px 16px;
+    margin-top: 4px;
+  }
+
+  .power-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .power-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    padding: 3px 12px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+  }
+
+  .power-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-sub);
+  }
+
+  .power-chara-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .power-chara {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 52px;
+  }
+
+  .power-chara-emoji {
+    font-size: 34px;
+    line-height: 1.2;
+  }
+
+  .power-chara-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-sub);
+    white-space: nowrap;
+  }
+
+  .power-bubble {
+    position: relative;
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    margin: 0;
+    color: var(--color-text-main);
+  }
+
+  .power-bubble::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-left: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    transform: rotate(45deg);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  footer.app-footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--color-text-sub);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-text-sub);
+    font-size: 14px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (min-width: 640px) {
+    .page {
+      max-width: 520px;
+      padding-top: 12px;
+    }
+
+    .zodiac-btn .zodiac-emoji {
+      font-size: 30px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <span class="header-kicker">MORNING MAGAZINE</span>
+      <h1 class="app-title"><span class="brand">『遊！』</span>今日の星座占い</h1>
+      <p class="app-date" id="today-date"></p>
+    </header>
+
+    <!-- 星座セレクター（初回 or 変更時に表示） -->
+    <section class="zodiac-picker" id="picker-section" aria-labelledby="picker-label">
+      <p class="section-label" id="picker-label">あなたの星座を選んでください</p>
+      <div class="zodiac-grid" role="group" aria-label="星座を選択" id="zodiac-grid"></div>
+    </section>
+
+    <!-- 選択済みバー（星座を記憶済みの場合、セレクターの代わりに表示） -->
+    <div class="selected-bar hidden" id="selected-bar">
+      <div class="selected-bar-info">
+        <span class="selected-bar-emoji" aria-hidden="true"></span>
+        <span class="selected-bar-text">あなたの星座<strong></strong></span>
+      </div>
+      <button type="button" class="btn-change" id="btn-change">星座を変更</button>
+    </div>
+
+    <!-- 結果カード -->
+    <section class="result-card hidden" id="result-section" aria-labelledby="result-heading" aria-live="polite">
+      <div class="result-hero">
+        <span class="result-hero-emoji" id="result-emoji" aria-hidden="true"></span>
+        <p class="result-hero-name" id="result-heading"></p>
+        <div class="result-hero-rank">
+          <span class="rank-label">今日の順位</span>
+          <span class="rank-number" id="result-rank"></span>
+          <span class="rank-unit">位 / 12星座中</span>
+        </div>
+      </div>
+
+      <div class="result-body">
+        <p class="fortune-text" id="result-text"></p>
+
+        <p class="section-label">今日のラッキー</p>
+        <div class="lucky-row">
+          <div class="lucky-item">
+            <div class="lucky-item-label">
+              <span aria-hidden="true">🎨</span> ラッキーカラー
+            </div>
+            <div class="lucky-item-value">
+              <span class="color-swatch" id="result-color-swatch"></span>
+              <span id="result-color"></span>
+            </div>
+          </div>
+          <div class="lucky-item">
+            <div class="lucky-item-label">
+              <span aria-hidden="true">🍀</span> ラッキーアイテム
+            </div>
+            <div class="lucky-item-value">
+              <span id="result-item"></span>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-label">運勢の内訳</p>
+        <div class="stat-list">
+          <div class="stat-row">
+            <span class="stat-label"><span aria-hidden="true">💖</span>恋愛運</span>
+            <span class="stat-stars" id="stars-love" role="img"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label"><span aria-hidden="true">💰</span>金運</span>
+            <span class="stat-stars" id="stars-money" role="img"></span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label"><span aria-hidden="true">💼</span>仕事運</span>
+            <span class="stat-stars" id="stars-job" role="img"></span>
+          </div>
+        </div>
+
+        <p class="section-label" style="margin-top:20px;">リベ的・今日の一歩</p>
+        <div class="power-card">
+          <div class="power-head">
+            <span class="power-badge" id="power-badge"></span>
+            <span class="power-title">今日みがく「5つの力」</span>
+          </div>
+          <div class="power-chara-row">
+            <span class="power-chara">
+              <span class="power-chara-emoji" id="power-chara-emoji" aria-hidden="true"></span>
+              <span class="power-chara-name" id="power-chara-name"></span>
+            </span>
+            <p class="power-bubble" id="power-text"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      毎朝配信中『遊！』— 今日の１食に感謝して
+    </footer>
+  </div>
+
+  <!--
+    ▼ データ差し替え口 ▼
+    毎朝のマガジン生成時に本物の占いデータ（annaの記事等から作成した12星座分）を
+    流し込む場合は、下の script タグの中に次の形式のJSONを書き込む：
+    {
+      "date": "2026-07-10",   ← JSTの今日の日付。ページ表示日と一致した場合のみ使われる
+      "signs": [
+        { "sign": "aries", "rank": 3, "content": "総合運の文章…",
+          "color": "瑠璃色", "colorHex": "#1e50a2",
+          "item": "ハンカチ", "love": 4, "money": 3, "job": 5,
+          "power": "貯める", "powerText": "5つの力アドバイス文…", "chara": "とら" },
+        …12星座分…
+      ]
+    }
+    power は 貯める/稼ぐ/増やす/守る/使う のいずれか、chara は ぺんぎん/ぱんだ/とら/いるか。
+    power系フィールドを省略した場合、その部分だけ内蔵エンジンが自動生成する。
+    空のまま（または日付が古いまま）なら、内蔵の占いエンジンが自動生成する。
+  -->
+  <script type="application/json" id="uranai-data"></script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'yuu-uranai-zodiac';
+
+      var ZODIACS = [
+        { key: 'aries',       emoji: '♈', name: 'おひつじ座' },
+        { key: 'taurus',      emoji: '♉', name: 'おうし座' },
+        { key: 'gemini',      emoji: '♊', name: 'ふたご座' },
+        { key: 'cancer',      emoji: '♋', name: 'かに座' },
+        { key: 'leo',         emoji: '♌', name: 'しし座' },
+        { key: 'virgo',       emoji: '♍', name: 'おとめ座' },
+        { key: 'libra',       emoji: '♎', name: 'てんびん座' },
+        { key: 'scorpio',     emoji: '♏', name: 'さそり座' },
+        { key: 'sagittarius', emoji: '♐', name: 'いて座' },
+        { key: 'capricorn',   emoji: '♑', name: 'やぎ座' },
+        { key: 'aquarius',    emoji: '♒', name: 'みずがめ座' },
+        { key: 'pisces',      emoji: '♓', name: 'うお座' }
+      ];
+
+      /* ---------- 占いエンジン（決定的・外部API非依存） ---------- */
+
+      // FNV-1a 32bit ハッシュ：文字列 → 数値シード
+      function fnv1a(str) {
+        var h = 0x811c9dc5;
+        for (var i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = (h * 0x01000193) >>> 0;
+        }
+        return h >>> 0;
+      }
+
+      // mulberry32：シード付きPRNG（0以上1未満）
+      function mulberry32(seed) {
+        var a = seed >>> 0;
+        return function () {
+          a = (a + 0x6D2B79F5) >>> 0;
+          var t = a;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      // その日の12星座の順位表（1〜12位、重複なし）
+      function dailyRanks(dateStr) {
+        var rng = mulberry32(fnv1a('rank:' + dateStr));
+        var order = ZODIACS.map(function (z, i) { return i; });
+        for (var i = order.length - 1; i > 0; i--) {
+          var j = Math.floor(rng() * (i + 1));
+          var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+        }
+        // order[r] = r位(0始まり)の星座インデックス → 星座ごとの順位に変換
+        var ranks = {};
+        order.forEach(function (zodiacIdx, pos) {
+          ranks[ZODIACS[zodiacIdx].key] = pos + 1;
+        });
+        return ranks;
+      }
+
+      // 導入文：順位帯ごとのトーン（上位：好調 / 中位：安定 / 下位：充電日）
+      var INTRO_HIGH = [
+        'エネルギーが満ちて、何をやってもうまく回りやすい一日。',
+        '追い風が吹いています。迷っていたことに踏み出すなら今日。',
+        '周囲からの注目度が高まり、あなたの言葉が届きやすい日。',
+        '直感が冴えわたるタイミング。ひらめきを信じて動いて吉。',
+        '努力が実を結ぶ気配。積み重ねてきたことに手応えを感じられそう。',
+        '人との縁が良い流れを運んでくれる日。誘いには乗ってみて。',
+        '心と体のバランスが良く、集中力も抜群。大事な用事は今日のうちに。',
+        '小さなラッキーが重なる予感。アンテナを高くしておきましょう。'
+      ];
+      var INTRO_MID = [
+        '大きな波はないぶん、足元を固めるのに向いた一日。',
+        '穏やかな運気。いつものペースを守ることが一番の開運に。',
+        '可もなく不可もなく…に見えて、丁寧さが評価される日です。',
+        '流れは安定。後回しにしていた小さな用事を片付けると運が動きます。',
+        '焦らずマイペースが吉。比べるなら他人ではなく昨日の自分と。',
+        '午後にかけて調子が上がっていく気配。朝はゆっくり整えて。',
+        '身近な人との何気ない会話にヒントが隠れている日。',
+        '普段どおりが一番強い日。ルーティンを大切にすると安心感が育ちます。'
+      ];
+      var INTRO_LOW = [
+        '今日は充電日。頑張りすぎず、自分を甘やかすくらいでちょうどいい。',
+        'ペースダウンが吉。予定を詰め込まず、余白を残しておきましょう。',
+        '思いどおりに進まなくても大丈夫。今日は種まきの日と割り切って。',
+        '少し空回りしやすい日。深呼吸して、ひとつずつ丁寧に。',
+        '無理に動くより、整える日。身の回りの片付けが運気の底上げに。',
+        '心が少し敏感になりがち。好きなものに触れる時間を意識的に。',
+        '今日は守りが正解。新しい挑戦は明日以降にとっておきましょう。',
+        '疲れが出やすいタイミング。早めの休息が明日の追い風になります。'
+      ];
+
+      var ADVICE = [
+        '朝の10分の余裕が、一日全体の流れを整えてくれます。',
+        '「ありがとう」を言葉にすると、良い縁がさらに近づきます。',
+        '迷ったら、ワクワクする方を選んでみて。',
+        '身近な人をひとつ褒めると、あなたの運も引き上がります。',
+        '窓を開けて朝の空気を入れ替えると、気持ちも切り替わります。',
+        '足元のおしゃれに気を配ると、自信が一段アップ。',
+        'メモを取る習慣が、思わぬチャンスを逃さない鍵に。',
+        '甘いものはご褒美のタイミングで。メリハリが運を育てます。',
+        '返信を後回しにしないことが、信頼貯金になります。',
+        '髪や手元を整えると、人からの印象が想像以上に変わります。',
+        '「まあいいか」のひと言が、心を軽くしてくれる日です。',
+        '昼休みに少し歩くと、午後のひらめきが増えます。',
+        '睡眠をいつもより30分多く。それだけで明日が変わります。',
+        '机の上をひとつ片付けると、頭の中もすっきりします。',
+        '久しぶりの人に連絡してみると、嬉しい流れが生まれそう。',
+        '直感で「いいな」と思ったものは、案外正解です。',
+        '水分をこまめに。体を整えることが一番の開運行動です。',
+        '笑顔は最強のラッキーアイテム。口角を少し上げて。',
+        '完璧を目指すより、まず終わらせることを優先して吉。',
+        '夜は好きな音楽でクールダウン。明日への英気を養って。'
+      ];
+
+      var COLORS = [
+        ['柿色', '#ed6d3d'], ['瑠璃色', '#1e50a2'], ['若草色', '#c3d825'],
+        ['山吹色', '#f8b500'], ['茜色', '#b7282e'], ['藤色', '#bbbcde'],
+        ['珊瑚色', '#f5b1aa'], ['金色', '#e6b422'], ['桜色', '#fdeff2'],
+        ['空色', '#a0d8ef'], ['萌黄色', '#aacf53'], ['橙色', '#ee7800'],
+        ['生成り色', '#fbfaf5'], ['抹茶色', '#c5c56a'], ['藍色', '#165e83'],
+        ['桃色', '#f09199'], ['ラベンダー', '#c8a2c8'], ['ミントグリーン', '#98d98e'],
+        ['アイボリー', '#f8f4e6'], ['ターコイズブルー', '#00afcc'],
+        ['マリーゴールドイエロー', '#e0a331'], ['チョコレートブラウン', '#6c3524'],
+        ['パールホワイト', '#f3f3f2'], ['シルバーグレー', '#afafb0']
+      ];
+
+      var ITEMS = [
+        '☕️ 淹れたてのコーヒー', '🍵 温かい緑茶', '📖 文庫本', '🖊 青いペン',
+        '🧣 お気に入りのハンカチ', '🪴 観葉植物', '🥤 マイボトル', '🎧 イヤホン',
+        '⌚️ 腕時計', '📝 小さなノート', '🪞 手鏡', '💄 リップクリーム',
+        '🔑 キーホルダー', '☂️ お気に入りの傘', '👟 歩きやすいスニーカー', '🧢 帽子',
+        '🍫 ひとかけらのチョコレート', '🍙 おにぎり', '🏷 付箋', '🛍 エコバッグ',
+        '🤲 香りのハンドクリーム', '🧦 新しい靴下', '📷 思い出の写真', '📮 きれいな切手',
+        '🎨 マスキングテープ', '🍎 りんご', '🥛 ヨーグルト', '📅 カレンダー',
+        '🛋 ふわふわのクッション', '🪥 新しい歯ブラシ', '🍋 レモンのお菓子', '🥪 サンドイッチ',
+        '🌸 一輪の花', '🕯 アロマキャンドル', '🧸 小さなマスコット', '💌 手書きのメモ',
+        '🎫 チケットの半券', '🍯 はちみつ', '🧊 冷たいお水', '🌿 ハーブティー'
+      ];
+
+      /* リベシティ「5つの力」：日替わりで1つの力＋アドバイス＋案内キャラを選ぶ */
+      var POWERS = [
+        { name: '貯める', color: '#3f9d63', advices: [
+          'サブスクをひとつ棚卸ししてみよう。小さな固定費の見直しが一番効くよ。',
+          '今日はコンビニに寄らない日にしてみよう。浮いたお金は未来の自分へ。',
+          'スマホの料金プラン、最後に見直したのはいつ？5分の確認が年間数万円になるかも。',
+          '保険や光熱費など、大きな固定費から見直すのがコツだよ。',
+          '「なんとなく出費」をひとつメモしてみよう。見える化が貯める力の第一歩。',
+          'ふるさと納税や控除の確認もお忘れなく。知っているだけで貯まるよ。'
+        ]},
+        { name: '稼ぐ', color: '#2f6fb3', advices: [
+          '今日の小さな学びが、将来の稼ぐ力になるよ。15分だけスキルアップの時間を。',
+          '自分の得意なこと、誰かの困りごとに変えられないかな？副業のタネは日常に。',
+          'アウトプットは最高の営業。今日の気づきをつぶやきで発信してみよう。',
+          '「ありがとう」と言われたことを書き出してみよう。それが稼ぐ力の原石だよ。',
+          '小さく始めて、早く学ぶ。行動した人から稼げるようになるよ。',
+          '今日出会う人との縁を大切に。仕事は人が運んでくるものだよ。'
+        ]},
+        { name: '増やす', color: '#d9932f', advices: [
+          '投資は入金力×時間。今日もコツコツ積み立てを続けよう。',
+          '相場が動いても慌てない。長期・分散・積立が王道だよ。',
+          '複利は人類最大の発明。時間を味方につけよう。',
+          '増やす前に生活防衛資金の確認を。土台があってこその投資だよ。',
+          '手数料の低さは正義。持っている商品を一度チェックしてみよう。',
+          '暴落は市場の風物詩。淡々と続けられる人が最後に笑うよ。'
+        ]},
+        { name: '守る', color: '#7a5aa8', advices: [
+          'うまい話には裏がある。「絶対儲かる」は絶対に疑おう。',
+          '保険は「低確率・大損失」に備えるもの。掛けすぎていないかチェック。',
+          'パスワードの使い回しは危険だよ。大事な口座から順に見直そう。',
+          '契約前のひと呼吸が、あなたのお金を守るよ。即決はしない。',
+          '詐欺は誰にでも来る。家族と「怪しい話」の共有をしておこう。',
+          '稼ぐより守るほうが簡単。ぼったくりのサインを学んでおこう。'
+        ]},
+        { name: '使う', color: '#c85a72', advices: [
+          'お金は使ってこそ価値になる。今日は小さな「豊かな消費」をひとつ。',
+          '経験への支出は最高の投資。思い出はインフレしないよ。',
+          '大切な人へのプレゼントは、幸福度の高いお金の使い方だよ。',
+          '自己投資は回収できる消費。本一冊が人生を変えることもあるよ。',
+          '浪費と豊かな消費の違いは「翌日の満足感」。振り返ってみよう。',
+          'たまには自分にご褒美を。使う力も立派な5つの力のひとつだよ。'
+        ]}
+      ];
+
+      var CHARAS = [
+        { key: 'ぺんぎん', emoji: '🐧', name: 'ぺんぎん' },
+        { key: 'ぱんだ',   emoji: '🐼', name: 'ぱんだ' },
+        { key: 'とら',     emoji: '🐯', name: 'とら' },
+        { key: 'いるか',   emoji: '🐬', name: 'いるか' }
+      ];
+
+      // 星の数：順位と緩く相関させつつ、星座×日付でばらつきを持たせる
+      function starsFor(rng, rank) {
+        var base = rank <= 3 ? 5 : rank <= 6 ? 4 : rank <= 9 ? 3 : 2;
+        var jitter = Math.floor(rng() * 3) - 1; // -1, 0, +1
+        var v = base + jitter;
+        return Math.max(1, Math.min(5, v));
+      }
+
+      // 星座×日付から占い結果を生成
+      function generateFortune(dateStr, zodiacKey) {
+        var ranks = dailyRanks(dateStr);
+        var rank = ranks[zodiacKey];
+        var rng = mulberry32(fnv1a(dateStr + ':' + zodiacKey));
+
+        var introPool = rank <= 4 ? INTRO_HIGH : rank <= 8 ? INTRO_MID : INTRO_LOW;
+        var intro = introPool[Math.floor(rng() * introPool.length)];
+        var advice = ADVICE[Math.floor(rng() * ADVICE.length)];
+        var color = COLORS[Math.floor(rng() * COLORS.length)];
+        var item = ITEMS[Math.floor(rng() * ITEMS.length)];
+        var love = starsFor(rng, rank);
+        var money = starsFor(rng, rank);
+        var job = starsFor(rng, rank);
+        var power = POWERS[Math.floor(rng() * POWERS.length)];
+        var powerText = power.advices[Math.floor(rng() * power.advices.length)];
+        var chara = CHARAS[Math.floor(rng() * CHARAS.length)];
+
+        return {
+          rank: rank,
+          content: intro + advice,
+          color: color[0],
+          colorHex: color[1],
+          item: item,
+          love: love,
+          money: money,
+          job: job,
+          power: power.name,
+          powerText: powerText,
+          chara: chara.key
+        };
+      }
+
+      /* ---------- 日付（JST） ---------- */
+
+      function jstToday() {
+        var now = new Date();
+        // en-CA ロケールは YYYY-MM-DD 形式を返す
+        var iso = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(now);
+        var display = new Intl.DateTimeFormat('ja-JP', {
+          timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+        }).format(now); // 例: 2026年7月10日(金)
+        display = display.replace('(', '（').replace(')', '）');
+        return { iso: iso, display: display };
+      }
+
+      /* ---------- 差し替えデータ（マガジン生成時に注入される本物のデータ） ---------- */
+
+      function loadInjectedData(todayIso) {
+        var el = document.getElementById('uranai-data');
+        if (!el) return null;
+        var raw = (el.textContent || '').trim();
+        if (!raw) return null;
+        try {
+          var data = JSON.parse(raw);
+          if (data.date !== todayIso || !Array.isArray(data.signs)) return null;
+          var map = {};
+          data.signs.forEach(function (s) { map[s.sign] = s; });
+          return map;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      /* ---------- UI ---------- */
+
+      var today = jstToday();
+      var injected = loadInjectedData(today.iso);
+
+      document.getElementById('today-date').textContent = today.display;
+
+      var grid = document.getElementById('zodiac-grid');
+      var pickerSection = document.getElementById('picker-section');
+      var selectedBar = document.getElementById('selected-bar');
+      var selectedBarEmoji = selectedBar.querySelector('.selected-bar-emoji');
+      var selectedBarName = selectedBar.querySelector('.selected-bar-text strong');
+      var resultSection = document.getElementById('result-section');
+
+      ZODIACS.forEach(function (z) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'zodiac-btn';
+        btn.dataset.zodiac = z.key;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.innerHTML =
+          '<span class="zodiac-emoji" aria-hidden="true">' + z.emoji + '</span>' +
+          '<span class="zodiac-name">' + z.name + '</span>';
+        btn.addEventListener('click', function () {
+          try { localStorage.setItem(STORAGE_KEY, z.key); } catch (e) {}
+          showResult(z.key);
+        });
+        grid.appendChild(btn);
+      });
+
+      function renderStars(el, n) {
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+          html += '<span class="' + (i <= n ? 'on' : 'off') + '">' + (i <= n ? '★' : '☆') + '</span>';
+        }
+        el.innerHTML = html;
+        el.setAttribute('aria-label', '5段階中' + n);
+      }
+
+      function showResult(zodiacKey) {
+        var z = ZODIACS.find(function (x) { return x.key === zodiacKey; });
+        if (!z) return;
+
+        // 注入データがあればそれを優先し、足りないフィールドは内蔵エンジンの生成結果で補完
+        var generated = generateFortune(today.iso, zodiacKey);
+        var f = (injected && injected[zodiacKey])
+          ? Object.assign({}, generated, injected[zodiacKey])
+          : generated;
+
+        document.querySelectorAll('.zodiac-btn').forEach(function (btn) {
+          btn.setAttribute('aria-pressed', btn.dataset.zodiac === zodiacKey ? 'true' : 'false');
+        });
+
+        selectedBarEmoji.textContent = z.emoji;
+        selectedBarName.textContent = z.name;
+
+        document.getElementById('result-emoji').textContent = z.emoji;
+        document.getElementById('result-heading').textContent = z.name + 'の今日の運勢';
+        document.getElementById('result-rank').textContent = f.rank;
+        document.getElementById('result-text').textContent = f.content;
+        document.getElementById('result-color').textContent = f.color;
+        document.getElementById('result-color-swatch').style.background = f.colorHex || '#e0a331';
+        document.getElementById('result-item').textContent = f.item;
+        renderStars(document.getElementById('stars-love'), f.love);
+        renderStars(document.getElementById('stars-money'), f.money);
+        renderStars(document.getElementById('stars-job'), f.job);
+
+        // リベシティ「5つの力」セクション
+        var powerDef = POWERS.find(function (p) { return p.name === f.power; }) || POWERS[0];
+        var charaDef = CHARAS.find(function (c) { return c.key === f.chara; }) || CHARAS[0];
+        var badge = document.getElementById('power-badge');
+        badge.textContent = powerDef.name;
+        badge.style.background = powerDef.color;
+        document.getElementById('power-chara-emoji').textContent = charaDef.emoji;
+        document.getElementById('power-chara-name').textContent = charaDef.name;
+        document.getElementById('power-text').textContent = f.powerText || '';
+
+        pickerSection.classList.add('hidden');
+        selectedBar.classList.remove('hidden');
+        resultSection.classList.remove('hidden');
+      }
+
+      function showPicker() {
+        pickerSection.classList.remove('hidden');
+        selectedBar.classList.add('hidden');
+      }
+
+      document.getElementById('btn-change').addEventListener('click', showPicker);
+
+      // 初期表示：記憶済みの星座があれば即結果を表示
+      var saved = null;
+      try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (saved && ZODIACS.some(function (z) { return z.key === saved; })) {
+        showResult(saved);
+      } else {
+        showPicker();
+      }
+    })();
+  </script>
+</body>
+</html>
