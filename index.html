@@ -619,8 +619,6 @@
     (function () {
       'use strict';
 
-      var STORAGE_KEY = 'yuu-uranai-zodiac';
-
       var ZODIACS = [
         { key: 'aries',       emoji: '♈', name: 'おひつじ座' },
         { key: 'taurus',      emoji: '♉', name: 'おうし座' },
@@ -905,7 +903,6 @@
           '<span class="zodiac-emoji" aria-hidden="true">' + z.emoji + '</span>' +
           '<span class="zodiac-name">' + z.name + '</span>';
         btn.addEventListener('click', function () {
-          try { localStorage.setItem(STORAGE_KEY, z.key); } catch (e) {}
           showResult(z.key);
         });
         grid.appendChild(btn);
@@ -970,14 +967,8 @@
 
       document.getElementById('btn-change').addEventListener('click', showPicker);
 
-      // 初期表示：記憶済みの星座があれば即結果を表示
-      var saved = null;
-      try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-      if (saved && ZODIACS.some(function (z) { return z.key === saved; })) {
-        showResult(saved);
-      } else {
-        showPicker();
-      }
+      // 初期表示：毎回、星座未選択の状態から始める
+      showPicker();
     })();
   </script>
 </body>
